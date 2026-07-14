@@ -1,11 +1,12 @@
 import pandas as pd
-from typing import Tuple, List
+from typing import Tuple
 from core.exceptions import InvalidSchemaError
 
 class DataValidator:
     """Valida y normaliza de forma estricta los datos ingresados a la planta."""
     
-    REQUIRED_ESTADO = {"MAQUINA", "ESTILO_REAL", "LOTE_HILO"}
+    # Ajustado exactamente a las columnas de tu imagen de Excel
+    REQUIRED_ESTADO = {"MAQUINA", "ESTILO_OPTIMO", "LOTE_HILO"}
     REQUIRED_DEMANDA = {"ESTILO_OPTIMO", "LOTE_HILO", "LBS_PENDIENTES"}
     REQUIRED_PARAMS = {"Campo", "Valor"}
 
@@ -16,7 +17,7 @@ class DataValidator:
         """Asegura la calidad de datos y normaliza tipos de forma vectorizada."""
         
         if not cls.REQUIRED_ESTADO.issubset(df_estado.columns):
-            raise InvalidSchemaError(f"Faltan columnas críticas en ESTADO_MAQUINA: {cls.REQUIRED_ESTADO - set(df_estado.columns)}")
+            raise InvalidSchemaError(f"Faltan columnas críticas en ESTADO_MAQUINA. Se esperan: {cls.REQUIRED_ESTADO}. Columnas detectadas: {list(df_estado.columns)}")
         if not cls.REQUIRED_DEMANDA.issubset(df_demanda.columns):
             raise InvalidSchemaError(f"Faltan columnas críticas en DEMANDA: {cls.REQUIRED_DEMANDA - set(df_demanda.columns)}")
         if not cls.REQUIRED_PARAMS.issubset(df_params.columns):
@@ -27,9 +28,9 @@ class DataValidator:
         demanda = df_demanda.copy()
         params = df_params.copy()
 
-        # Normalización estricta de IDs de máquinas (Padding a 4 dígitos de forma segura)
+        # Normalización de IDs de máquinas 
         estado["MAQUINA"] = estado["MAQUINA"].dropna().astype(float).astype(int).astype(str).str.zfill(4)
-        estado["ESTILO_REAL"] = estado["ESTILO_REAL"].astype(str).str.strip()
+        estado["ESTILO_OPTIMO"] = estado["ESTILO_OPTIMO"].astype(str).str.strip()
         estado["LOTE_HILO"] = estado["LOTE_HILO"].astype(str).str.strip()
 
         # Normalización de Demanda
