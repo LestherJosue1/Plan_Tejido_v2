@@ -9,7 +9,6 @@ st.set_page_config(page_title="Plan Tejido de Avanzada v7", layout="wide")
 st.title("🧵 Sistema de Planificación Industrial Avanzada — Tejido")
 st.markdown("---")
 
-# File Uploader de la Interfaz de Usuario
 uploaded_file = st.file_uploader("Suba el archivo de control de operaciones de planta (.xlsx)", type=["xlsx"])
 
 if uploaded_file:
@@ -21,21 +20,17 @@ if uploaded_file:
             st.error(f"❌ Estructura de archivo inválida. Deben existir las pestañas: {pestanas_requeridas}")
             st.stop()
             
-        # Ingesta cruda inicial de datos (asumiendo cabeceras estándar en fila 1)
-        estado_raw = pd.read_excel(xls, "ESTADO_MAQUINA", header=1)
-        demanda_raw = pd.read_excel(xls, "DEMANDA", header=1)
-        params_raw = pd.read_excel(xls, "PARAMETROS", header=1)
+        # Corregido a header=0 para empezar la lectura en la primera fila real del Excel
+        estado_raw = pd.read_excel(xls, "ESTADO_MAQUINA", header=0)
+        demanda_raw = pd.read_excel(xls, "DEMANDA", header=0)
+        params_raw = pd.read_excel(xls, "PARAMETROS", header=0)
         
-        # INVOCACIÓN A LA CAPA DE SERVICIO (Desacoplada y protegida por la caché nativa de la UI)
         @st.cache_data(show_spinner="Ejecutando asignaciones y validaciones del core de ingeniería...")
         def _cached_pipeline(df_e, df_d, df_p):
             return PlanningOrchestratorService.ejecutar_pipeline_industrial(df_e, df_d, df_p)
             
         plan, kpis, pivot = _cached_pipeline(estado_raw, demanda_raw, params_raw)
         
-        # ============================================================
-        # VISUALIZACIÓN DE CUADROS DE MANDO E INDICADORES KPI
-        # ============================================================
         st.subheader("⚙️ Métricas de Rendimiento Operativo del Plan")
         m1, m2, m3, m4 = st.columns(4)
         
@@ -50,7 +45,6 @@ if uploaded_file:
         m3.metric("Picos de Máquinas Activas", f"{max_maqs} Máqs", help="Máxima cantidad de telares operando simultáneamente")
         m4.metric("Paradas por Set-up", f"{total_setups} Cambios", delta=int(total_setups), delta_color="inverse", help="Veces que se detendrá una máquina a cambiar estilo/lote")
         
-        # Control de Pestañas Visuales
         tabs = st.tabs(["📋 Plan de Trabajo Diario", "📊 Matriz de Distribución (Estilo Excel)", "📈 Capacidad e Impacto Operativo"])
         
         with tabs[0]:
@@ -63,7 +57,6 @@ if uploaded_file:
             st.markdown("#### Balance de Carga de Planta por Día")
             st.line_chart(kpis.set_index("FECHA"))
             
-        # Generación segura de binario de descarga Excel sin manipulación local de IO
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
             plan.to_excel(writer, index=False, sheet_name="PLAN_DIARIO")
