@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 import io
-from core.services import PlanificacionService
+from core.services import PlanningOrchestratorService
 
 st.set_page_config(page_title="Planificación Avanzada de Tejido", layout="wide")
 
